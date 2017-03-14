@@ -6,12 +6,7 @@
 #include <string.h>
 
 void query();
-char queryFile[4][100] = {
-        "/proc/net/tcp",
-        "/proc/net/tcp6",
-        "/proc/net/udp",
-        "/proc/net/udp6"
-};
+
 typedef struct element{
     char protocol[5];
     char localAdderss[25];
@@ -20,6 +15,7 @@ typedef struct element{
     struct element *next;
 }LISTELEMENT;
 LISTELEMENT *head = NULL;
+LISTELEMENT *tail = NULL;
 
 int main(int argc, char *argv[]){
 
@@ -38,36 +34,51 @@ int main(int argc, char *argv[]){
         while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1) {
             switch(c){
                 case 't':
-                    query(0);
+                    query(0, 0);
+                    query(0, 1);
                     break;
                 case 'u':
-                    query(1);
+                    query(1, 0);
+                    query(1, 1);
                     break;
             }
         }
     //}
     return 0;
 }
-void query(int TCPUDP){
-    FILE *fptr1, *fptr2;
+void query(int TCPUDP, int version){
+    FILE *fptr;
     char lineBuf[1000];
     char colBuf[256];
     if(!TCPUDP){
-        fptr1 = fopen("/proc/net/tcp","r");
-        fptr2 = fopen("/proc/net/tcp6","r");
+        if(!version)
+            fptr = fopen("/proc/net/tcp","r");
+        else
+            fptr = fopen("/proc/net/tcp6","r");
     }
     else{
-        fptr1 = fopen("/proc/net/udp","r");
-        fptr2 = fopen("/proc/net/udp6","r");
+        if(!version)
+            fptr = fopen("/proc/net/udp","r");
+        else
+            fptr = fopen("/proc/net/udp6","r");
     }
     LISTELEMENT *curr = NULL;
-    LISTELEMENT *tail = NULL;
     fgets(lineBuf, 1000, fptr1);//skip first line
     while(fgets(lineBuf, 1000, fptr1) != NULL){
         curr = malloc(sizeof(LISTELEMENT));
         curr -> next = NULL;
-        if(!TCPUDP)
-            strcpy(curr -> protocol,"tcp");
+        if(!TCPUDP){
+            if(!version)
+                strcpy(curr -> protocol,"tcp");
+            else
+                strcpy(curr -> protocol,"tcp6");
+        }
+        else{
+            if(!version)
+                strcpy(curr -> protocol,"udp");
+            else
+                strcpy(curr -> protocol,"udp6");
+        }
         if(!head){
             head = curr;
             tail = head;
@@ -77,7 +88,7 @@ void query(int TCPUDP){
             tail = tail -> next;
         }
         int i = 0;
-        while(sscanf(lineBuf, "%s", colBuf) != EOF){
+        while(sscanf(lineBuf, "%s", colBuf)){
             printf("%s", colBuf);
             if(i == 1)
                 strcpy(curr -> localAdderss, colBuf);
