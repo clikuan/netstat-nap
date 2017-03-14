@@ -61,7 +61,7 @@ void query(int TCPUDP){
         fptr2 = fopen("/proc/net/udp6","r");
     }
     LISTELEMENT *curr = NULL;
-    LISTELEMENT *tail = NULL
+    LISTELEMENT *tail = NULL;
     fgets(lineBuf, 1000, fptr1);//skip first line
     while(fgets(lineBuf, 1000, fptr1) != NULL){
         curr = malloc(sizeof(LISTELEMENT));
