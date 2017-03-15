@@ -98,15 +98,6 @@ int main(int argc, char *argv[]){
             query(0, 1);
         }
     }
-    // char abc[100];
-    // char b[100];
-    // strcpy(b,"05AC708C:0017");
-    // printf("%s\n", binaryString2IP(1,b));
-    // char abc1[100];
-    // char b1[100];
-    // strcpy(b1,"017AA8C0:0017");
-    // printf("%s\n", binaryString2IP(1,b1));
-
     printList(stringFiler);
     freeList();
     return 0;
@@ -160,8 +151,7 @@ void query(int TCP, int version){
             if(i == 1)
             	strcpy(curr -> localAddress, token);
             else if(i == 2)
-            	 strcpy(curr -> foreignAddress, token);
-            
+            	strcpy(curr -> foreignAddress, token);
             else if(i == 9){
                 PIDINFO *i;
                 for( i = pHead; i != NULL; i = i -> next){
@@ -252,7 +242,6 @@ void currentSocketPorcess(){
         closedir(pidDir);
     }
     closedir(procDir);
-    PIDINFO *i;
 }
 int isDirectory(const char *path) {
    struct stat statbuf;
@@ -262,7 +251,6 @@ int isDirectory(const char *path) {
 }
 void readFile(char *path, char *buffer){
     FILE *fptr = fopen(path, "r");
-    //fgets(buffer, 256, fptr);
     int i = 0;
     char c;
     while((c = getc(fptr)) != EOF){
@@ -361,10 +349,11 @@ void freeList(){
         free(t);
         i = i -> next;
     }
-    /*PIDINFO *j;
-    for( j = pHead; j != NULL;){
-        PIDINFO *t = j;
-        free(t);
-        j = j -> next;
-    }*/
+    // PIDINFO *j;
+    // for( j = pHead; j != NULL;){
+    // 	printf("1\n");
+    //     PIDINFO *t = j;
+    //     free(t);
+    //     j = j -> next;
+    // }
 }
