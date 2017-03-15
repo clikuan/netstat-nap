@@ -138,13 +138,13 @@ void query(int TCPUDP, int version){
                 for( i = pHead; i != NULL; i = i -> next){
                     if(!strcmp(i -> inodeID, token)){
                         strcpy(curr -> pidNameArguments, i -> pid);
-                        strcat(curr -> pidNameArguments, "/");
+                        strcat(curr -> pidNameArguments, "/");                       
                         char *name;
                         char *n;
                         char *d = "/";
                         name = strtok( i -> nameArguments, d);
                         while (name != NULL){
-                            printf("%s\n",name);
+                            //printf("%s\n",name);
                             n = name;
                             name = strtok (NULL, d);  
                         }
@@ -210,6 +210,7 @@ void currentSocketPorcess(){
                     strcat(path ,curr -> pid);
                     strcat(path, "/cmdline");
                     readFile(path, curr -> nameArguments);
+                    printf("%s\n", curr -> nameArguments);
                     if(!pHead){
                         pHead = curr;
                         pTail = pHead;
@@ -236,7 +237,17 @@ int isDirectory(const char *path) {
 }
 void readFile(char *path, char *buffer){
     FILE *fptr = fopen(path, "r");
-    fgets(buffer, 256, fptr);
+    //fgets(buffer, 256, fptr);
+    int i = 0;
+    char c;
+    while((c = getc(fptr)) != EOF){
+        buffer[i]= (c == '\0') ? ' ' : c;
+        if(i == 254)
+            break;
+        i++;
+    }
+    buffer[i] = '\0';
+    //printf("%s\n",buffer);
     fclose(fptr);
 }
 void freeList(){
