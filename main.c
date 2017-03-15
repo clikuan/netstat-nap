@@ -7,8 +7,11 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <regex.h> 
 
 void query();
+int vaildRegex(char *);
+int stringMatch(char *, char *);
 void currentSocketPorcess();
 void freeList();
 int isDirectory(const char *);
@@ -34,7 +37,8 @@ PIDINFO *pHead = NULL;
 PIDINFO *pTail = NULL;
 
 int main(int argc, char *argv[]){
-    int flag = 0;
+    int printFlag = 0;
+    char *stringFiler = NULL;
     if (setuid(0)){
         fprintf(stderr, "setuid error\n");
         return 1;
@@ -48,22 +52,46 @@ int main(int argc, char *argv[]){
             {NULL, 0, NULL, 0}
         };
         int c;
+        int tcp = 0,udp = 0;
         while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1) {
             switch(c){
                 case 't':
-                    query(0, 0);
-                    query(0, 1);
-                    flag = 1;
+                    tcp = 1;
                     break;
                 case 'u':
-                    query(1, 0);
-                    query(1, 1);
-                    flag = 1;
+                    udp = 1;
+                    break;
+                case '?':
+                    fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
+                    exit(1);
                     break;
             }
         }
+        argc -= optind;
+        argv += optind;
+        if(argc == 1){
+            stringFiler = argv[0];
+            if(!vaildRegex(stringFiler)){
+                fprintf(stderr, "invaild regular expression");
+                exit(1);
+            }
+        }
+        else if(argc > 1){
+            fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
+            exit(1);
+        }
+        if(tcp){
+            query(0, 0);
+            query(0, 1);
+            printFlag = 1;
+        }
+        if(udp){
+            query(1, 0);
+            query(1, 1);
+            printFlag = 1;
+        }
     }
-    if(flag == 1){
+    if(printFlag == 1){
         LISTELEMENT *t = malloc(sizeof(LISTELEMENT));
         strcpy(t -> protocol, "Proto");
         strcpy(t -> localAddress, "LocalAddress");
@@ -72,9 +100,23 @@ int main(int argc, char *argv[]){
         t -> next = lHead;
         lHead = t;
         LISTELEMENT *i; 
-        for( i = lHead; i != NULL; i = i -> next)
-            printf("%-10s %-45s %-45s %-100s\n", i -> protocol, 
+        for( i = lHead; i != NULL; i = i -> next){
+            if(i == lHead){
+                printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
                     i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
+            }
+            if(stringFiler){
+                if(stringMatch(stringFiler, i -> protocol) || stringMatch(stringFiler, i -> localAddress) 
+                    || stringMatch(stringFiler, i -> foreignAddress) || stringMatch(stringFiler, i -> pidNameArguments)){
+                        printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+                            i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
+                }
+            }
+            else{
+                printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+                                i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
+            }
+        }
     }
     freeList();
     return 0;
@@ -130,10 +172,6 @@ void query(int TCPUDP, int version){
             else if(i == 2)
                 strcpy(curr -> foreignAddress, token);
             else if(i == 9){
-                
-                //printf("%s\n", token);
-                //inode2Pid(colBuf);
-                //strcpy(curr -> localAdderss, );
                 PIDINFO *i;
                 for( i = pHead; i != NULL; i = i -> next){
                     if(!strcmp(i -> inodeID, token)){
@@ -144,7 +182,6 @@ void query(int TCPUDP, int version){
                         char *d = "/";
                         name = strtok( i -> nameArguments, d);
                         while (name != NULL){
-                            //printf("%s\n",name);
                             n = name;
                             name = strtok (NULL, d);  
                         }
@@ -210,7 +247,6 @@ void currentSocketPorcess(){
                     strcat(path ,curr -> pid);
                     strcat(path, "/cmdline");
                     readFile(path, curr -> nameArguments);
-                    printf("%s\n", curr -> nameArguments);
                     if(!pHead){
                         pHead = curr;
                         pTail = pHead;
@@ -226,8 +262,6 @@ void currentSocketPorcess(){
     }
     closedir(procDir);
     PIDINFO *i;
-    //for( i = pHead; i != NULL; i = i -> next)
-    //    printf("%s\n", i->nameArguments);
 }
 int isDirectory(const char *path) {
    struct stat statbuf;
@@ -247,8 +281,24 @@ void readFile(char *path, char *buffer){
         i++;
     }
     buffer[i] = '\0';
-    //printf("%s\n",buffer);
     fclose(fptr);
+}
+int vaildRegex(char *r){
+    regex_t regex;
+    int reti = regcomp(&regex, r, 0);
+    regfree(&regex);
+    return !reti;
+}
+int stringMatch(char *r, char *s){
+    regex_t regex;
+    regcomp(&regex, r, 0);
+    int reti = regexec(&regex, s, 0, NULL, 0);
+    regfree(&regex);
+    if (!reti) 
+        return 1;
+    else if (reti == REG_NOMATCH)
+        return 0;
+    
 }
 void freeList(){
     LISTELEMENT *i;
@@ -257,4 +307,10 @@ void freeList(){
         free(t);
         i = i -> next;
     }
+    /*PIDINFO *j;
+    for( j = pHead; j != NULL;){
+        PIDINFO *t = j;
+        free(t);
+        j = j -> next;
+    }*/
 }
