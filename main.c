@@ -302,7 +302,7 @@ void printList(char *stringFiler){
 	    }
 	    else{
 	    	binaryString2IP(0, i -> localAddress, local);
-	    	binaryString2IP(1, i -> foreignAddress, fore);
+	    	binaryString2IP(0, i -> foreignAddress, fore);
 
 	    }
         if(stringFiler){
@@ -333,13 +333,24 @@ void binaryString2IP(int ipv4, char *binaryString, char *address){
         strcat(address, p1);
     }
     else{
-    	strcpy(address, binaryString);
-        struct in6_addr addr;
-        //strcpy(addr.s6_addr32,binaryString);
+    	struct in6_addr tmp_ip;
+		char *ptr;
+        char *d = ":";
+        char *ip = strtok(binaryString, d);
+        char *port = strtok(NULL, d);
+		if (sscanf(ip,
+		    "%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx",
+		    &tmp_ip.s6_addr[3], &tmp_ip.s6_addr[2], &tmp_ip.s6_addr[1], &tmp_ip.s6_addr[0],
+		    &tmp_ip.s6_addr[7], &tmp_ip.s6_addr[6], &tmp_ip.s6_addr[5], &tmp_ip.s6_addr[4],
+		    &tmp_ip.s6_addr[11], &tmp_ip.s6_addr[10], &tmp_ip.s6_addr[9], &tmp_ip.s6_addr[8],
+		    &tmp_ip.s6_addr[15], &tmp_ip.s6_addr[14], &tmp_ip.s6_addr[13], &tmp_ip.s6_addr[12]) == 16){
+		    inet_ntop(AF_INET6, &tmp_ip, address, INET6_ADDRSTRLEN);
+			long p = strtol(port, &ptr, 16);
+			char p1[15];
+	        sprintf(p1, ":%ld", p);
+	        strcat(address, p1);
+		}
 
-        //printf("%d\n",sizeof(struct in6_addr));
-        //addr.
-        //inet_ntop(AF_INET6, &(addr.s_addr), address, INET6_ADDRSTRLEN);
     }
 }
 void freeList(){
