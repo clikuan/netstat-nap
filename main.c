@@ -12,7 +12,7 @@ void query();
 void currentSocketPorcess();
 void freeList();
 int isDirectory(const char *);
-char* readFile(char *);
+void readFile(char *, char *);
 
 typedef struct element{
     char protocol[5];
@@ -26,7 +26,7 @@ LISTELEMENT *lTail = NULL;
 
 typedef struct pElement{
     char pid[20]; 
-    char pidNameArguments[256];
+    char nameArguments[256];
     char inodeID[20];
     struct pElement *next;
 }PIDINFO;
@@ -40,6 +40,7 @@ int main(int argc, char *argv[]){
         return 1;
     }
     else{
+        currentSocketPorcess();
         char * const short_options = "tu";
         const struct option long_options[] = {
             {"tcp",0,NULL,'t'},
@@ -50,7 +51,6 @@ int main(int argc, char *argv[]){
         while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1) {
             switch(c){
                 case 't':
-                    currentSocketPorcess();
                     query(0, 0);
                     query(0, 1);
                     break;
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    freeList();LISTELEMENT *head = NULL;
+    freeList();
 
     return 0;
 }
@@ -115,17 +115,26 @@ void query(int TCPUDP, int version){
             else if(i == 2)
                 strcpy(curr -> foreignAddress, token);
             else if(i == 9){
+                
                 //printf("%s\n", token);
                 //inode2Pid(colBuf);
                 //strcpy(curr -> localAdderss, );
+                PIDINFO *i;
+                for( i = pHead; i != NULL; i = i -> next){
+                    if(!strcmp(i -> inodeID, token)){
+                        strcpy(curr -> pidNameArguments, i -> pid);
+                        strcpy(curr -> pidNameArguments, "/");
+                        strcpy(curr -> pidNameArguments, i -> nameArguments);
+                    }
+                }
             }
             i++;
             token = strtok (NULL, delim);
         }
     }
-    /*LISTELEMENT *i;
+    LISTELEMENT *i;
     for( i = lHead; i != NULL; i = i -> next)
-        printf("%s\n", i->localAdderss);*/
+        printf("%s\n", i -> pidNameArguments);
 }
 void currentSocketPorcess(){
     struct dirent *procDirent;
@@ -136,7 +145,6 @@ void currentSocketPorcess(){
         closedir(procDir);
         exit(1);
     }
-    char *pidNameArguments = NULL;
     while ((procDirent = readdir(procDir)) != NULL) {
         if(!(strcmp(procDirent->d_name,".") && strcmp(procDirent->d_name,"..")))
             continue;
@@ -147,16 +155,11 @@ void currentSocketPorcess(){
         strcat(pidPath, "/fd");
         if(!isDirectory(pidPath))
             continue;
-        //printf("%s\n",pidPath);
+        //printf("%s\n",pidPath);char
         pidDir = opendir(pidPath);
         if(ENOENT == errno){
             closedir(pidDir);
             continue;
-        }
-        if(pidNameArguments != NULL){
-            //char *t = pidNameArguments;
-            free(pidNameArguments);
-            //pidNameArguments = NULL;
         }
         while((pidDirent = readdir(pidDir)) != NULL){
             if(!(strcmp(pidDirent->d_name,".") && strcmp(pidDirent->d_name,"..")))
@@ -181,14 +184,10 @@ void currentSocketPorcess(){
                     curr -> next = NULL;
                     strcpy(curr -> pid, procDirent -> d_name);
                     strcpy(curr -> inodeID, token);
-                    if(pidNameArguments == NULL){
-                        char path[256] = "/proc/";
-                        strcat(path ,curr -> pid);
-                        strcat(path, "/cmdline");
-                        readFile(path);
-                        //printf("%s\n", pidNameArguments);
-                    }
-                    //strcpy(curr -> pidNameArguments, pidNameArguments);
+                    char path[256] = "/proc/";
+                    strcat(path ,curr -> pid);
+                    strcat(path, "/cmdline");
+                    readFile(path, curr -> nameArguments);
                     if(!pHead){
                         pHead = curr;
                         pTail = pHead;
@@ -197,17 +196,15 @@ void currentSocketPorcess(){
                         pTail -> next = curr;
                         pTail = pTail -> next;
                     }
-                    //printf("%s\n", curr -> pidNameArguments);
                 }
-                
-                //printf("less /proc/%s/cmdline\n", curr -> pid);
-                //printf("[%s]->%s\n", fdPath, linkBuf);
             }
-            //printf ("[%s]\n", pidDirent->d_name);
         }
         closedir(pidDir);
     }
     closedir(procDir);
+    PIDINFO *i;
+    //for( i = pHead; i != NULL; i = i -> next)
+    //    printf("%s\n", i->nameArguments);
 }
 int isDirectory(const char *path) {
    struct stat statbuf;
@@ -215,39 +212,11 @@ int isDirectory(const char *path) {
        return 0;
    return S_ISDIR(statbuf.st_mode);
 }
-char* readFile(char *path){
-   int string_size, read_size;
-   char *buffer;
-   FILE *handler = fopen(path, "r");
-   if (handler)
-   {
-       // Seek the last byte of the file
-       fseek(handler, 0, SEEK_END);
-       // Offset from the first to the last byte, or in other words, filesize
-       string_size = ftell(handler);
-       // go back to the start of the file
-       rewind(handler);
-       
-       // Allocate a string that can hold it all
-       buffer = (char*) malloc(sizeof(char) * (string_size + 1) );
-       // Read it all in one operation
-       read_size = fread(buffer, sizeof(char), string_size, handler);
-       // fread doesn't set it so put a \0 in the last position
-       // and buffer is now officially a string
-       (buffer)[string_size] = '\0';
-
-       if (string_size != read_size)
-       {
-           // Something went wrong, throw away the memory and set
-           // the buffer to NULL
-           free(buffer);
-           buffer = NULL;
-       }
-       // Always remember to close the file.
-       fclose(handler);
-    }
-    printf("%s\n",buffer);
-    return buffer;
+void readFile(char *path, char *buffer){
+    FILE *fptr = fopen(path, "r");
+    fgets(buffer, 256, fptr);
+    printf("%s\n", buffer);
+    fclose(fptr);
 }
 void freeList(){
     LISTELEMENT *i;
