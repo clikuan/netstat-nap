@@ -8,14 +8,17 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <regex.h> 
+#include <arpa/inet.h>
 
 void query();
+void printList(char *);
 int vaildRegex(char *);
 int stringMatch(char *, char *);
 void currentSocketPorcess();
 void freeList();
 int isDirectory(const char *);
 void readFile(char *, char *);
+void binaryString2IP(int, char *, char *);
 
 typedef struct element{
     char protocol[6];
@@ -80,51 +83,32 @@ int main(int argc, char *argv[]){
             fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
             exit(1);
         }
-        if(tcp){
-            query(0, 0);
-            query(0, 1);
-            printFlag = 1;
-        }
-        if(udp){
+        if(optind == 1){
             query(1, 0);
             query(1, 1);
-            printFlag = 1;
+            query(0, 0);
+            query(0, 1);
         }
-    }
-    if(printFlag == 1){
-        LISTELEMENT *t = malloc(sizeof(LISTELEMENT));
-        strcpy(t -> protocol, "Proto");
-        strcpy(t -> localAddress, "LocalAddress");
-        strcpy(t -> foreignAddress, "ForeignAddress");
-        strcpy(t -> pidNameArguments, "PID/Program name and arguments");
-        t -> next = lHead;
-        lHead = t;
-        LISTELEMENT *i; 
-        for( i = lHead; i != NULL; i = i -> next){
-            if(i == lHead){
-                printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
-                    i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
-            }
-            if(stringFiler){
-                if(stringMatch(stringFiler, i -> protocol) || stringMatch(stringFiler, i -> localAddress) 
-                    || stringMatch(stringFiler, i -> foreignAddress) || stringMatch(stringFiler, i -> pidNameArguments)){
-                        printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
-                            i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
-                }
-            }
-            else{
-                printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
-                                i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
-            }
+        if(tcp){
+            query(1, 0);
+            query(1, 1);
         }
+        if(udp){
+            query(0, 0);
+            query(0, 1);
+        }
+        printList(stringFiler);
     }
+    //char abc[100];
+    //binaryString2IP(0, "BACD0120000000000000000052965732",abc);
+    //printf("%s\n",abc);
     freeList();
     return 0;
 }
-void query(int TCPUDP, int version){
+void query(int TCP, int version){
     FILE *fptr;
     char lineBuf[1000];
-    if(!TCPUDP){
+    if(TCP){
         if(!version)
             fptr = fopen("/proc/net/tcp","r");
         else
@@ -142,7 +126,7 @@ void query(int TCPUDP, int version){
         curr = malloc(sizeof(LISTELEMENT));
         curr -> next = NULL;
         memset(curr, 0, sizeof(LISTELEMENT));
-        if(!TCPUDP){
+        if(TCP){
             if(!version)
                 strcpy(curr -> protocol,"tcp");
             else
@@ -168,9 +152,9 @@ void query(int TCPUDP, int version){
         token = strtok(lineBuf,delim);
         while (token != NULL){
             if(i == 1)
-                strcpy(curr -> localAddress, token);
+                binaryString2IP(!version, token, curr -> localAddress);
             else if(i == 2)
-                strcpy(curr -> foreignAddress, token);
+                binaryString2IP(!version, token, curr -> foreignAddress);
             else if(i == 9){
                 PIDINFO *i;
                 for( i = pHead; i != NULL; i = i -> next){
@@ -299,6 +283,56 @@ int stringMatch(char *r, char *s){
     else if (reti == REG_NOMATCH)
         return 0;
     
+}
+void printList(char *stringFiler){
+    LISTELEMENT *t = malloc(sizeof(LISTELEMENT));
+    strcpy(t -> protocol, "Proto");
+    strcpy(t -> localAddress, "LocalAddress");
+    strcpy(t -> foreignAddress, "ForeignAddress");
+    strcpy(t -> pidNameArguments, "PID/Program name and arguments");
+    t -> next = lHead;
+    lHead = t;
+    LISTELEMENT *i; 
+    for( i = lHead; i != NULL; i = i -> next){
+        if(i == lHead){
+            printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+                i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
+            continue;
+        }
+        if(stringFiler){
+            if(stringMatch(stringFiler, i -> protocol) || stringMatch(stringFiler, i -> localAddress) 
+                || stringMatch(stringFiler, i -> foreignAddress) || stringMatch(stringFiler, i -> pidNameArguments)){
+                    printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+                        i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
+            }
+        }
+        else{
+            printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+                            i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
+        }
+    }
+}
+void binaryString2IP(int ipv4, char *binaryString, char *address){
+    
+    if(ipv4){
+        char *ptr;
+        char *d = ":";
+        char *ip = strtok(binaryString, d);
+        char *port = strtok(NULL, d);
+        long p = strtol(port, &ptr, 16);
+        struct in_addr addr;
+        addr.s_addr = strtol(ip, &ptr, 16);
+        inet_ntop(AF_INET, &(addr.s_addr), address, INET_ADDRSTRLEN);
+        char p1[15];
+        sprintf(p1, ":%lld", p);
+        strcat(address, p1);
+    }
+    else{
+        //struct in6_addr addr;
+        //addr.
+        //inet_ntop(AF_INET6, &(addr.s_addr), address, INET6_ADDRSTRLEN);
+    }
+    //printf("%s\n",address);
 }
 void freeList(){
     LISTELEMENT *i;
