@@ -335,7 +335,7 @@ void binaryString2IP(int ipv4, char *binaryString, char *address){
     }
     else{
     	struct in6_addr tmp_ip;
-		char *ptr;
+	char *ptr;
         char *d = ":";
         char *ip = strtok(binaryString, d);
         char *port = strtok(NULL, d);
@@ -348,8 +348,8 @@ void binaryString2IP(int ipv4, char *binaryString, char *address){
 		    inet_ntop(AF_INET6, &tmp_ip, address, INET6_ADDRSTRLEN);
 			long p = strtol(port, &ptr, 16);
 			char p1[15];
-	        sprintf(p1, ":%ld", p);
-	        strcat(address, p1);
+	        	sprintf(p1, ":%ld", p);
+	        	strcat(address, p1);
 		}
 
     }
