@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <regex.h> 
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 void query();
 int vaildRegex(char *);
@@ -357,14 +358,13 @@ void freeList(){
     LISTELEMENT *i;
     for( i = lHead; i != NULL;){
         LISTELEMENT *t = i;
-        free(t);
         i = i -> next;
+	free(t);
     }
-    // PIDINFO *j;
-    // for( j = pHead; j != NULL;){
-    // 	printf("1\n");
-    //     PIDINFO *t = j;
-    //     free(t);
-    //     j = j -> next;
-    // }
+    PIDINFO *j;
+    for( j = pHead; j != NULL;){
+    	PIDINFO *t = j;    	
+    	j = j -> next;
+	free(t);
+    }
 }
