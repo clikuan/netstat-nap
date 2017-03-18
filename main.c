@@ -281,19 +281,22 @@ int stringMatch(char *r, char *s){
     
 }
 void printList(char *stringFiler){
-    LISTELEMENT *t = malloc(sizeof(LISTELEMENT));
-    strcpy(t -> protocol, "Proto");
-    strcpy(t -> localAddress, "LocalAddress");
-    strcpy(t -> foreignAddress, "ForeignAddress");
-    strcpy(t -> pidNameArguments, "PID/Program name and arguments");
-    t -> next = lHead;
-    lHead = t;
-    LISTELEMENT *i; 
+    char *protocol = "Proto";
+    char *localAddress = "LocalAddress";
+    char *foreignAddress = "ForeignAddress";
+    char *pidNameArguments = "PID/Program name and arguments";
+    LISTELEMENT *i;
+    int tcpPrinted = 0, updPrinted = 0;
     for( i = lHead; i != NULL; i = i -> next){
-        if(i == lHead){
-            printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
-            i -> localAddress, i -> foreignAddress, i -> pidNameArguments);
-            continue;
+        if(!tcpPrinted && (!strcmp(i -> protocol, "tcp") || !strcmp(i -> protocol, "tcp6"))){
+            printf("List of TCP connections:\n");
+            printf("%-10s %-30s %-30s %-10s\n", protocol, localAddress, foreignAddress, pidNameArguments);
+            tcpPrinted = 1;
+        }
+        if(!updPrinted && (!strcmp(i -> protocol, "udp") || !strcmp(i -> protocol, "upd6"))){
+            printf("List of UDP connections:\n");
+            printf("%-10s %-30s %-30s %-10s\n", protocol, localAddress, foreignAddress, pidNameArguments);
+            updPrinted = 1;
         }
         char local[100];
 		char fore[100];
@@ -307,14 +310,17 @@ void printList(char *stringFiler){
 
 	    }
         if(stringFiler){
-            if(stringMatch(stringFiler, i -> protocol) || stringMatch(stringFiler, i -> localAddress) 
-                || stringMatch(stringFiler, i -> foreignAddress) || stringMatch(stringFiler, i -> pidNameArguments)){
-                    printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+            char t[256];
+            strcpy(t, i -> pidNameArguments);
+            char *token = strtok(t, "/");
+            token = strtok(NULL, "/");
+            if(stringMatch(stringFiler, token)){
+                    printf("%-10s %-30s %-30s %-10s\n", i -> protocol, 
                         local, fore, i -> pidNameArguments);
             }
         }
         else{
-            printf("%-10s %-45s %-45s %-10s\n", i -> protocol, 
+            printf("%-10s %-30s %-30s %-10s\n", i -> protocol, 
                     local, fore, i -> pidNameArguments);
         }
      }
