@@ -43,62 +43,62 @@ PIDINFO *pTail = NULL;
 int main(int argc, char *argv[]){
     int printFlag = 0;
     char *stringFiler = NULL;
-    if (setuid(0)){
+    /*if (setuid(0)){
         fprintf(stderr, "setuid error\n");
         return 1;
-    }
-    else{
-        currentSocketPorcess();
-        char * const short_options = "tu";
-        const struct option long_options[] = {
-            {"tcp", 0, NULL,'t'},
-            {"udp", 0, NULL,'u'},
-            {NULL, 0, NULL, 0}
-        };
-        int c;
-        int tcp = 0,udp = 0;
-        while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1) {
-            switch(c){
-                case 't':
-                    tcp = 1;
-                    break;
-                case 'u':
-                    udp = 1;
-                    break;
-                case '?':
-                    fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
-                    exit(1);
-                    break;
-            }
-        }
-        argc -= optind;
-        argv += optind;
-        if(argc == 1){
-            stringFiler = argv[0];
-            if(!vaildRegex(stringFiler)){
-                fprintf(stderr, "invaild regular expression");
-                exit(1);
-            }
-        }
-        else if(argc > 1){
-            fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
-            exit(1);
-        }
-        if(optind == 1){
-        	query(1, 0);
-            query(1, 1);
-            query(0, 0);
-            query(0, 1);
-        }
-        if(tcp){
-            query(1, 0);
-            query(1, 1);
-        }
-        if(udp){
-            query(0, 0);
-            query(0, 1);
-        }
-    }
+    }*/
+    //else{
+		currentSocketPorcess();
+		char * const short_options = "tu";
+		const struct option long_options[] = {
+			{"tcp", 0, NULL,'t'},
+			{"udp", 0, NULL,'u'},
+			{NULL, 0, NULL, 0}
+		};
+		int c;
+		int tcp = 0,udp = 0;
+		while((c = getopt_long (argc, argv, short_options, long_options, NULL)) != -1) {
+			switch(c){
+				case 't':
+					tcp = 1;
+					break;
+				case 'u':
+					udp = 1;
+					break;
+				case '?':
+					fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
+					exit(1);
+					break;
+			}
+		}
+		argc -= optind;
+		argv += optind;
+		if(argc == 1){
+			stringFiler = argv[0];
+			if(!vaildRegex(stringFiler)){
+				fprintf(stderr, "invaild regular expression");
+				exit(1);
+			}
+		}
+		else if(argc > 1){
+			fprintf(stderr, "command should be [-t|--tcp] [-u|--udp] [filter-string]\n");
+			exit(1);
+		}
+		if(optind == 1){
+			query(1, 0);
+			query(1, 1);
+			query(0, 0);
+			query(0, 1);
+		}
+		if(tcp){
+			query(1, 0);
+			query(1, 1);
+		}
+		if(udp){
+			query(0, 0);
+			query(0, 1);
+		}
+    //}
     printList(stringFiler);
     freeList();
     return 0;
