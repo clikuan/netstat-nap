@@ -1,4 +1,4 @@
-# netstat
+# netstat-nap
 List all the existing TCP and UDP connections
 
 ## Platform
